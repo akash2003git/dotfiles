@@ -1,0 +1,101 @@
+#!/usr/bin/env bash
+# Standalone volume controller (HyDE-free replacement for `hyde-shell volumecontrol`)
+# Usage: volumecontrol -[o|i] <action> [step]      action = i|d|m
+#        volumecontrol -s ''                        open audio mixer
+
+is_pipewire=false
+if command -v wpctl >/dev/null 2>&1 && pactl info 2>/dev/null | grep -q "PipeWire"; then
+    is_pipewire=true
+fi
+
+step="${VOLUME_STEPS:-5}"
+notify_vol() {
+    local vol=$1 kind=$2
+    if [ "$kind" = "input" ]; then
+        notify-send -a "Waybar" -r 8 -t 2000 "Microphone: ${vol}%"
+    else
+        notify-send -a "Waybar" -r 8 -t 2000 "Volume: ${vol}%"
+    fi
+}
+
+case "$1" in
+-s)
+    selection="$2"
+    if [ -n "$selection" ]; then
+        if $is_pipewire; then
+            wpctl set-default "$selection"
+        else
+            pactl set-default-sink "$selection"
+        fi
+    else
+        if command -v pavucontrol >/dev/null 2>&1; then
+            pavucontrol -t 3 &
+        elif command -v pavucontrol-qt >/dev/null 2>&1; then
+            pavucontrol-qt -t 3 &
+        else
+            notify-send "Volume" "Install pavucontrol to pick an output device"
+        fi
+    fi
+    exit 0
+    ;;
+-i)
+    srce="@DEFAULT_AUDIO_SOURCE@"
+    input=1
+    ;;
+-o)
+    srce="@DEFAULT_AUDIO_SINK@"
+    input=0
+    ;;
+*)
+    echo "Usage: $(basename "$0") -[o|i] <i|d|m> [step]" >&2
+    exit 1
+    ;;
+esac
+
+action="$2"
+[ -n "$3" ] && step="$3"
+
+case "$action" in
+i)
+    if $is_pipewire; then
+        wpctl set-volume -l 1.0 "$srce" "${step}%+"
+        vol=$(wpctl get-volume "$srce" | awk '{print int($2*100)}')
+    else
+        pactl set-sink-volume @DEFAULT_SINK@ "+${step}%"
+        vol=$(pactl get-sink-volume @DEFAULT_SINK@ | grep -oP '\d+(?=%)' | head -1)
+    fi
+    [ $input -eq 1 ] && pactl set-source-volume @DEFAULT_SOURCE@ "+${step}%" 2>/dev/null
+    notify_vol "$vol" $([ $input -eq 1 ] && echo input || echo output)
+    ;;
+d)
+    if $is_pipewire; then
+        wpctl set-volume -l 1.0 "$srce" "${step}%-"
+        vol=$(wpctl get-volume "$srce" | awk '{print int($2*100)}')
+    else
+        pactl set-sink-volume @DEFAULT_SINK@ "-${step}%"
+        vol=$(pactl get-sink-volume @DEFAULT_SINK@ | grep -oP '\d+(?=%)' | head -1)
+    fi
+    [ $input -eq 1 ] && pactl set-source-volume @DEFAULT_SOURCE@ "-${step}%" 2>/dev/null
+    notify_vol "$vol" $([ $input -eq 1 ] && echo input || echo output)
+    ;;
+m)
+    if $is_pipewire; then
+        wpctl set-mute "$srce" toggle
+    else
+        if [ $input -eq 1 ]; then
+            pactl set-source-mute @DEFAULT_SOURCE@ toggle
+        else
+            pactl set-sink-mute @DEFAULT_SINK@ toggle
+        fi
+    fi
+    if [ $input -eq 1 ]; then
+        notify-send -a "Waybar" -r 8 -t 2000 "Microphone toggled"
+    else
+        notify-send -a "Waybar" -r 8 -t 2000 "Volume toggled"
+    fi
+    ;;
+*)
+    echo "Usage: $(basename "$0") -[o|i] <i|d|m> [step]" >&2
+    exit 1
+    ;;
+esac

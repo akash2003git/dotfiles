@@ -1,0 +1,51 @@
+#!/usr/bin/env bash
+# Standalone logout / power launcher (HyDE-free replacement for `hyde-shell logoutlaunch`)
+# Usage: logoutlaunch [1]     (opens the wlogout overlay)
+
+if pgrep -x wlogout >/dev/null 2>&1; then
+    pkill -x wlogout
+    exit 0
+fi
+
+if ! command -v wlogout >/dev/null 2>&1; then
+    notify-send "Logout" "wlogout is not installed"
+    exit 1
+fi
+
+style="${1:-1}"
+layout="${XDG_CONFIG_HOME:-$HOME/.config}/wlogout/layout_${style}"
+css="${XDG_CONFIG_HOME:-$HOME/.config}/wlogout/style_${style}.css"
+
+# --- Layout geometry -------------------------------------------------------
+# wlogout sizes its layer surface to the whole monitor and lays the buttons
+# out in a grid, so the buttons are kept centered / non-fullscreen purely
+# via the margins below (there are no window width/height options in 1.2.2).
+btn_w=100
+btn_h=92
+gap=12
+
+scr_w=1920
+scr_h=1080
+if command -v hyprctl >/dev/null 2>&1; then
+    read -r scr_w scr_h < <(
+        hyprctl monitors -j 2>/dev/null | jq -r '
+            (map(select(.focused == true)) | .[0]) // .[0]
+            | "\(((.width / (.scale // 1)) | floor)) \(((.height / (.scale // 1)) | floor))"'
+    )
+fi
+
+mgn_x=$(( (scr_w - (btn_w * 6 + gap * 5)) / 2 ))
+mgn_y=$(( (scr_h - btn_h) / 2 ))
+[ "$mgn_x" -lt 0 ] && mgn_x=0
+[ "$mgn_y" -lt 0 ] && mgn_y=0
+
+# --- Launch ----------------------------------------------------------------
+# -n prevents wlogout from spawning the extra fullscreen monitor windows that
+# block input on Hyprland (see https://github.com/ArtsyMacaw/wlogout/issues/70)
+if [ -f "$layout" ] && [ -f "$css" ]; then
+    wlogout -b 6 -c "$gap" -r "$gap" -m 0 \
+        -T "$mgn_y" -B "$mgn_y" -L "$mgn_x" -R "$mgn_x" \
+        --layout "$layout" --css "$css" --protocol layer-shell -n
+else
+    wlogout --protocol layer-shell -n
+fi

@@ -1,0 +1,42 @@
+#!/usr/bin/env bash
+# Standalone clipboard manager (HyDE-free replacement for `hyde-shell cliphist`)
+# Requires: cliphist, wl-clipboard (wl-copy), and a dmenu (wofi/rofi/fuzzel)
+
+picker() {
+    local prompt="$1"
+    if command -v wofi >/dev/null 2>&1; then
+        wofi --dmenu --prompt "$prompt"
+    elif command -v rofi >/dev/null 2>&1; then
+        rofi -dmenu -p "$prompt"
+    elif command -v fuzzel >/dev/null 2>&1; then
+        fuzzel --dmenu --prompt "$prompt"
+    else
+        echo "" >&2
+        notify-send "Clipboard" "Install wofi, rofi, or fuzzel"
+        return 1
+    fi
+}
+
+case "$1" in
+--wipe | -w | clear-history)
+    cliphist wipe
+    notify-send "Clipboard" "History cleared"
+    ;;
+--delete | -d | delete-history)
+    sel=$(cliphist list | picker "Delete")
+    [ -n "$sel" ] && cliphist delete <<<"$sel"
+    ;;
+--copy | -c | history)
+    sel=$(cliphist list | picker "Clipboard")
+    [ -n "$sel" ] && cliphist decode <<<"$sel" | wl-copy
+    ;;
+--favorites | -f | "Manage Favorites" | manage-favorites)
+    # No favorites system in the standalone version; fall back to history picker.
+    sel=$(cliphist list | picker "Favorites (history)")
+    [ -n "$sel" ] && cliphist decode <<<"$sel" | wl-copy
+    ;;
+*)
+    sel=$(cliphist list | picker "Clipboard")
+    [ -n "$sel" ] && cliphist decode <<<"$sel" | wl-copy
+    ;;
+esac

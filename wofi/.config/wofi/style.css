@@ -1,0 +1,92 @@
+/* Catppuccin Mocha - Wofi */
+@define-color base #1e1e2e;
+@define-color mantle #181825;
+@define-color crust #11111b;
+@define-color surface0 #313244;
+@define-color surface1 #45475a;
+@define-color surface2 #585b70;
+@define-color overlay0 #6c7086;
+@define-color text #cdd6f4;
+@define-color subtext0 #a6adc8;
+@define-color mauve #cba6f7;
+
+* {
+  font-family: "Adwaita Sans", "Noto Sans", sans-serif;
+  font-size: 14px;
+  color: @text;
+}
+
+#window {
+  background-color: rgba(30, 30, 46, 0.95);
+  border: 2px solid @mauve;
+  border-radius: 18px;
+  padding: 0px;
+}
+
+#outer-box {
+  background-color: transparent;
+  border-radius: 18px;
+  padding: 0px;
+}
+
+#input {
+  background-color: @surface0;
+  color: @text;
+  caret-color: @mauve;
+  border: 1px solid @surface1;
+  border-radius: 12px;
+  padding: 10px 14px;
+  margin: 14px 14px 12px 14px;
+}
+
+#input:focus {
+  border-color: @mauve;
+}
+
+#input image {
+  color: @mauve;
+}
+
+#scroll {
+  background-color: transparent;
+  border-radius: 12px;
+  margin: 0px 14px 14px 14px;
+}
+
+scrollbar,
+scrollbar trough,
+undershoot.top,
+undershoot.bottom {
+  min-width: 5px;
+  min-height: 5px;
+  background: none;
+}
+
+scrollbar slider {
+  background-color: @mauve;
+  border-radius: 5px;
+}
+
+#entry {
+  background-color: transparent;
+  border-radius: 10px;
+  padding: 8px 10px;
+}
+
+#entry #text {
+  color: @text;
+}
+
+#entry image {
+  margin-right: 12px;
+  border-radius: 6px;
+}
+
+#entry:selected {
+  background-color: @surface0;
+  outline: none;
+}
+
+#entry:selected #text {
+  color: @mauve;
+}

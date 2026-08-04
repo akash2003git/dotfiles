@@ -1,0 +1,57 @@
+#!/usr/bin/env bash
+# Standalone package update counter (HyDE-free replacement for `hyde-shell system.update`)
+# Emits Waybar JSON like: {"text":"󰮯 3","tooltip":"󱓽 Official 2\n󱓾 AUR 1"}  (empty text when up to date)
+
+temp_file="${XDG_RUNTIME_DIR:-/tmp}/custom-waybar-updates"
+
+if [ "$1" == "up" ]; then
+    if [ -f "$temp_file" ]; then
+        source "$temp_file"
+        aurhlpr=""
+        for h in yay paru trizen pamac; do command -v "$h" >/dev/null 2>&1 && aurhlpr=$h && break; done
+        upd_cmd="sudo pacman -Syu"
+        [ -n "$aurhlpr" ] && upd_cmd="sudo pacman -Syu; $aurhlpr -Syu"
+        terminal=""
+        for t in kitty konsole alacritty ghostty wezterm foot; do command -v "$t" >/dev/null 2>&1 && terminal=$t && break; done
+        if [ -n "$terminal" ]; then
+            "$terminal" --title systemupdate sh -c "$upd_cmd; read -n 1 -p 'Press any key to continue...'"
+        else
+            notify-send "System Update" "Open a terminal and run: $upd_cmd"
+        fi
+    else
+        notify-send "System Update" "No update info yet. Restart the update module."
+    fi
+    exit 0
+fi
+
+# Only supported on Arch-based distros
+if [ ! -f /etc/arch-release ]; then
+    exit 0
+fi
+
+aurhlpr=""
+for h in yay paru trizen pamac; do command -v "$h" >/dev/null 2>&1 && aurhlpr=$h && break; done
+
+aur=0
+ofc=0
+fpk=0
+
+if command -v checkupdates >/dev/null 2>&1; then
+    ofc=$(checkupdates 2>/dev/null | wc -l)
+fi
+[ -n "$aurhlpr" ] && aur=$("$aurhlpr" -Qua 2>/dev/null | wc -l)
+if command -v flatpak >/dev/null 2>&1; then
+    fpk=$(flatpak remote-ls --updates 2>/dev/null | wc -l)
+fi
+
+upd=$((ofc + aur + fpk))
+printf 'OFFICIAL_UPDATES=%s\nAUR_UPDATES=%s\nFLATPAK_UPDATES=%s\n' "$ofc" "$aur" "$fpk" > "$temp_file"
+
+fpk_disp=""
+[ "$fpk" -gt 0 ] && fpk_disp="\n󰏓 Flatpak $fpk"
+
+if [ "$upd" -eq 0 ]; then
+    echo "{\"text\":\"\", \"tooltip\":\"󰁘 Packages are up to date\"}"
+else
+    printf '{"text":"󰮯 %s", "tooltip":"󱓽 Official %s\\n󱓾 AUR %s%s"}\n' "$upd" "$ofc" "$aur" "$fpk_disp"
+fi

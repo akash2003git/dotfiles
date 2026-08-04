@@ -1,0 +1,38 @@
+{
+    "include": [
+        "$HOME/.config/waybar/modules/backlight.jsonc",
+        "$HOME/.config/waybar/modules/battery.jsonc",
+        "$HOME/.config/waybar/modules/clock.jsonc",
+        "$HOME/.config/waybar/modules/cpu.jsonc",
+        "$HOME/.config/waybar/modules/custom-cliphist.jsonc",
+        "$HOME/.config/waybar/modules/custom-cpuinfo.jsonc",
+        "$HOME/.config/waybar/modules/custom-gamemode.jsonc",
+        "$HOME/.config/waybar/modules/custom-gpuinfo.jsonc",
+        "$HOME/.config/waybar/modules/custom-hyprsunset.jsonc",
+        "$HOME/.config/waybar/modules/custom-notification.jsonc",
+        "$HOME/.config/waybar/modules/custom-power.jsonc",
+        "$HOME/.config/waybar/modules/custom-updates.jsonc",
+        "$HOME/.config/waybar/modules/ext-workspaces.jsonc",
+        "$HOME/.config/waybar/modules/idle_inhibitor.jsonc",
+        "$HOME/.config/waybar/modules/memory.jsonc",
+        "$HOME/.config/waybar/modules/network.jsonc",
+        "$HOME/.config/waybar/modules/privacy.jsonc",
+        "$HOME/.config/waybar/modules/pulseaudio.jsonc",
+        "$HOME/.config/waybar/modules/pulseaudio#microphone.jsonc",
+        "$HOME/.config/waybar/modules/tray.jsonc",
+        "$HOME/.config/waybar/modules/wlr-taskbar.jsonc"
+    ],
+    "privacy": {
+        "icon-size": 10,
+        "icon-size-multiplier": 1
+    },
+    "tray": {
+        "icon-size": 16,
+        "icon-size-multiplier": 1.6
+    },
+    "wlr/taskbar": {
+        "icon-size": 20,
+        "icon-size-multiplier": 2
+    },
+    "position": "top"
+}

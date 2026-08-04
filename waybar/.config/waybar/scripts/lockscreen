@@ -1,0 +1,13 @@
+#!/usr/bin/env bash
+# Standalone lockscreen (HyDE-free replacement for `hyde-shell lockscreen.sh`)
+# Uses hyprlock if installed, otherwise locks the session via loginctl.
+
+lock="${HYDE_LOCKSCREEN:-hyprlock}"
+if command -v "$lock" >/dev/null 2>&1; then
+    exec "$lock" "$@"
+elif command -v hyprlock >/dev/null 2>&1; then
+    exec hyprlock "$@"
+else
+    notify-send "Lock" "hyprlock is not installed; locking session"
+    loginctl lock-session
+fi

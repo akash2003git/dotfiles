@@ -1,0 +1,36 @@
+#!/usr/bin/env bash
+# Game-mode toggle: enables/disables Feral GameMode (gamemoded) and
+# disables Hyprland animations for maximum performance while gaming.
+# Requires: gamemode, hyprctl
+
+LOCK_FILE="${XDG_RUNTIME_DIR:-/run/user/$(id -u)}/waybar-gamemode.lck"
+
+start_gamemoded() {
+    if command -v systemctl >/dev/null 2>&1 && systemctl --user list-unit-files gamemoded.service >/dev/null 2>&1; then
+        systemctl --user start gamemoded
+    elif command -v gamemoded >/dev/null 2>&1; then
+        gamemoded >/dev/null 2>&1 &
+    fi
+}
+
+stop_gamemoded() {
+    if command -v systemctl >/dev/null 2>&1 && systemctl --user list-unit-files gamemoded.service >/dev/null 2>&1; then
+        systemctl --user stop gamemoded
+    else
+        pkill -x gamemoded 2>/dev/null
+    fi
+}
+
+if [ -f "$LOCK_FILE" ]; then
+    stop_gamemoded
+    hyprctl eval 'hl.config({ animations = { enabled = true } })' -q 2>/dev/null
+    hyprctl reload config-only -q 2>/dev/null
+    rm -f "$LOCK_FILE"
+    notify-send -a "Waybar" "Game Mode" "OFF"
+else
+    mkdir -p "$(dirname "$LOCK_FILE")"
+    start_gamemoded
+    hyprctl eval 'hl.config({ animations = { enabled = false } })' -q 2>/dev/null
+    touch "$LOCK_FILE"
+    notify-send -a "Waybar" "Game Mode" "ON"
+fi

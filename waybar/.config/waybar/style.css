@@ -1,0 +1,23 @@
+/* Main Waybar stylesheet - HyDE 11.jsonc layout (self-contained)
+   Copy this whole folder to ~/.config/waybar and edit theme.css to recolor. */
+
+/* Group / island shapes (pill), dynamic border radius and base rules */
+@import "styles/hyprdots.css";
+
+/* Hardcoded theme colors (Catppuccin Mocha-ish default) */
+@import "theme.css";
+
+/* SwayNC notification toggle (updates live via swaync-client -swb) */
+#custom-notification {
+    font-family: "JetBrainsMono Nerd Font";
+    font-size: 13px;
+}
+
+#custom-notification:hover {
+    color: #89b4fa;
+}
+
+#custom-notification.dnd-none,
+#custom-notification.dnd-notification {
+    color: #f38ba8;
+}

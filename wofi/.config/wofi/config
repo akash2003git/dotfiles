@@ -1,0 +1,9 @@
+allow_images=true
+image_size=36
+location=center
+width=600
+height=514
+hide_scroll=false
+prompt=Search
+matching=fuzzy
+insensitive=true

@@ -1,0 +1,144 @@
+#!/usr/bin/env bash
+# Standalone GPU monitor (HyDE-free replacement for `hyde-shell gpuinfo`)
+# Emits Waybar JSON: {"text":"<icon> <temp>°C","tooltip":"...","class":["temp-NN","util-NN"],"percentage":N,"alt":"N"}
+
+gpuinfo_file="/tmp/custom-waybar-gpuinfo"
+
+map_floor() {
+    IFS=', ' read -r -a pairs <<<"$1"
+    if [[ ${pairs[-1]} != *":"* ]]; then
+        def_val="${pairs[-1]}"
+        unset 'pairs[${#pairs[@]}-1]'
+    fi
+    for pair in "${pairs[@]}"; do
+        IFS=':' read -r key value <<<"$pair"
+        num="${2%%.*}"
+        if [[ $num =~ ^-?[0-9]+$ && $key =~ ^-?[0-9]+$ ]]; then
+            if ((num > key)); then
+                echo "$value"
+                return
+            fi
+        elif [[ -n $num && -n $key && $num > $key ]]; then
+            echo "$value"
+            return
+        fi
+    done
+    [ -n "$def_val" ] && echo "$def_val" || echo " "
+}
+
+get_utilization() {
+    statFile=$(head -1 /proc/stat)
+    if [[ -z $GPUINFO_PREV_STAT ]]; then
+        GPUINFO_PREV_STAT=$(awk '{print $2+$3+$4+$6+$7+$8 }' <<<"$statFile")
+        echo "GPUINFO_PREV_STAT=\"$GPUINFO_PREV_STAT\"" >>"$gpuinfo_file"
+    fi
+    if [[ -z $GPUINFO_PREV_IDLE ]]; then
+        GPUINFO_PREV_IDLE=$(awk '{print $5 }' <<<"$statFile")
+        echo "GPUINFO_PREV_IDLE=\"$GPUINFO_PREV_IDLE\"" >>"$gpuinfo_file"
+    fi
+    currStat=$(awk '{print $2+$3+$4+$6+$7+$8 }' <<<"$statFile")
+    currIdle=$(awk '{print $5 }' <<<"$statFile")
+    diffStat=$((currStat - GPUINFO_PREV_STAT))
+    diffIdle=$((currIdle - GPUINFO_PREV_IDLE))
+    GPUINFO_PREV_STAT=$currStat
+    GPUINFO_PREV_IDLE=$currIdle
+    sed -i -e "/^GPUINFO_PREV_STAT=/c\GPUINFO_PREV_STAT=\"$currStat\"" -e "/^GPUINFO_PREV_IDLE=/c\GPUINFO_PREV_IDLE=\"$currIdle\"" "$gpuinfo_file" || {
+        echo "GPUINFO_PREV_STAT=\"$currStat\"" >>"$gpuinfo_file"
+        echo "GPUINFO_PREV_IDLE=\"$currIdle\"" >>"$gpuinfo_file"
+    }
+    awk -v stat="$diffStat" -v idle="$diffIdle" 'BEGIN {printf "%.1f", (stat/(stat+idle))*100}'
+}
+
+case "$1" in
+--toggle | -t)
+    rm -f "$gpuinfo_file"
+    notify-send "GPU Info" "Re-detecting GPU sensor" 2>/dev/null
+    exit 0
+    ;;
+--reset | -rf)
+    rm -f "$gpuinfo_file"
+    echo "GPU sensor state reset"
+    exit 0
+    ;;
+esac
+
+[[ -f "$gpuinfo_file" ]] && source "$gpuinfo_file"
+
+primary_gpu=""
+temperature=""
+utilization=""
+current_clock_speed=""
+max_clock_speed=""
+
+if command -v nvidia-smi >/dev/null 2>&1; then
+    gpu_info=$(nvidia-smi --query-gpu=gpu_name,temperature.gpu,utilization.gpu,clocks.current.graphics,clocks.max.graphics --format=csv,noheader,nounits 2>/dev/null)
+    if [ -n "$gpu_info" ]; then
+        IFS=',' read -ra data <<<"$gpu_info"
+        primary_gpu="NVIDIA ${data[0]}"
+        temperature="${data[1]// /}"
+        utilization="${data[2]// /}"
+        current_clock_speed="${data[3]// /}"
+        max_clock_speed="${data[4]// /}"
+    fi
+fi
+
+if [ -z "$temperature" ]; then
+    amd_busy="$(cat /sys/class/drm/card*/device/gpu_busy_percent 2>/dev/null | head -n1)"
+    sensors_data=$(sensors -j 2>/dev/null)
+    temperature=$(awk -F'[:,]' '
+        /"amdgpu-|"radeon-|"i915-|"coretemp-|"k10temp-|"zenpower-|"acpitz-|"cpu_thermal/ {
+            chip=$1; gsub(/"/,"",chip)
+        }
+        /"(edge|temp1|Package id|Tctl|Composite|tctl|Tdie|Core 0)"/ { getline; }
+    ' <<<"$sensors_data" 2>/dev/null)
+    if [ -z "$temperature" ]; then
+        temperature=$(echo "$sensors_data" | perl -e '
+            my $d = do { local $/; <> };
+            my @vals;
+            while ($d =~ /"temp\d+_input":\s*([\d.]+)/g) { push @vals, int($1); }
+            my $t;
+            for my $v (@vals) { $t = $v if $v > 20 && $v < 110; }
+            print "$t" if defined $t;
+        ' 2>/dev/null)
+    fi
+    if [ -n "$amd_busy" ]; then
+        utilization="$amd_busy"
+    else
+        utilization=$(get_utilization)
+    fi
+    max_clock_speed=$(awk '{print $1/1000}' /sys/devices/system/cpu/cpu0/cpufreq/cpuinfo_max_freq 2>/dev/null)
+    current_clock_speed=$(awk '{sum += $1; n++} END {if (n > 0) print sum / n / 1000 ""}' /sys/devices/system/cpu/cpufreq/policy*/scaling_cur_freq 2>/dev/null)
+    [ -z "$primary_gpu" ] && primary_gpu="GPU"
+fi
+
+[ -z "$temperature" ] && temperature=0
+[ -z "$utilization" ] && utilization=0
+
+temp_lv="85:, 65:, 45:, "
+util_lv="90:, 60:󰓅, 30:󰾅, 󰾆"
+icons="$(map_floor "$util_lv" "$utilization")$(map_floor "$temp_lv" "$temperature")"
+speedo=${icons:0:1}
+thermo=${icons:1:1}
+
+temp_val=${temperature%%.*}
+((temp_val < 0)) && temp_val=0
+((temp_val > 999)) && temp_val=999
+temp_bucket=$(((temp_val / 5) * 5))
+((temp_bucket > 100)) && temp_bucket=100
+temp_class="temp-$temp_bucket"
+
+util_val=${utilization%.*}
+((${util_val:-0} < 0)) && util_val=0
+((${util_val:-0} > 100)) && util_val=100
+util_bucket=$(((util_val / 10) * 10))
+util_class="util-$util_bucket"
+
+temp_pct=$temp_val
+((temp_pct > 100)) && temp_pct=100
+
+tooltip="$primary_gpu\n$thermo Temperature: $temperature°C"
+[ -n "$utilization" ] && tooltip+="\n$speedo Utilization: $utilization%"
+[ -n "$current_clock_speed" ] && tooltip+="\nClock Speed: $current_clock_speed/$max_clock_speed MHz"
+
+printf '{"text":"%s %s°C", "tooltip":"%s", "class":["%s","%s"], "percentage":%s, "alt":"%s"}\n' \
+    "$thermo" "$temperature" "$tooltip" "$temp_class" "$util_class" "$temp_pct" "$temp_bucket"

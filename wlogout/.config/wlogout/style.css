@@ -1,0 +1,65 @@
+@define-color mauve #cba6f7;
+@define-color wl-act #9DA6DE;
+@define-color wl-hvr #D6A9CA;
+
+* {
+    background-image: none;
+    font-size: 18px;
+}
+
+@import "/home/z-cell/.config/waybar/theme.css";
+
+window {
+    background-color: transparent;
+}
+
+button {
+    color: @main-fg;
+    background-color: @main-bg;
+    outline-style: none;
+    border: none;
+    background-repeat: no-repeat;
+    background-position: center;
+    background-size: 20%;
+    border-radius: 12px;
+    box-shadow: none;
+    text-shadow: none;
+    margin: 6px;
+}
+
+button:focus {
+    background-color: @wl-act;
+    background-size: 30%;
+}
+
+button:hover {
+    background-color: @wl-hvr;
+    background-size: 40%;
+    border-radius: 16px;
+    margin: 3px;
+    transition: all 0.3s cubic-bezier(.55,0.0,.28,1.682);
+}
+
+#lock {
+    background-image: url("/home/z-cell/.config/wlogout/icons/lock.svg");
+}
+
+#logout {
+    background-image: url("/home/z-cell/.config/wlogout/icons/logout.svg");
+}
+
+#suspend {
+    background-image: url("/home/z-cell/.config/wlogout/icons/suspend.svg");
+}
+
+#shutdown {
+    background-image: url("/home/z-cell/.config/wlogout/icons/shutdown.svg");
+}
+
+#hibernate {
+    background-image: url("/home/z-cell/.config/wlogout/icons/hibernate.svg");
+}
+
+#reboot {
+    background-image: url("/home/z-cell/.config/wlogout/icons/reboot.svg");
+}

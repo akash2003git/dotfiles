@@ -1,0 +1,11 @@
+#!/usr/bin/env bash
+# Standalone keybind hint viewer (HyDE-free replacement for `hyde-shell keybinds_hint`)
+# Uses `sov` (great Hyprland keybind viewer) or `hyprkeys`.
+
+if command -v sov >/dev/null 2>&1; then
+    exec sov -K
+elif command -v hyprkeys >/dev/null 2>&1; then
+    hyprkeys
+else
+    notify-send "Keybinds" "Install 'sov' or 'hyprkeys' to view keybinds"
+fi
