@@ -21,4 +21,5 @@ grimblast save "$TARGET" "$TMP" || exit 1
 
 # Open the capture in satty for annotation / save / copy.
 satty --filename "$TMP" \
-	--output-filename "$HOME/Pictures/Screenshots/screenshot-$(date '+%Y%m%d-%H%M%S').png"
+  --copy-command "wl-copy --type image/png" \
+  --output-filename "$HOME/Pictures/Screenshots/screenshot-$(date '+%Y%m%d-%H%M%S').png"
