@@ -59,6 +59,7 @@ export PROMPT_COMMAND="history -a; $PROMPT_COMMAND"
 
 # Custom user aliases
 alias tm="tmux -u"
+alias tmkill="tmux kill-session"
 alias nv="nvim"
 alias rc="nvim ~/.zshrc"
 alias ll="ls -la"
