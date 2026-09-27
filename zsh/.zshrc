@@ -66,6 +66,7 @@ alias ll="ls -la"
 alias cg="cd ~/.config"
 alias cdd="cd ~/Downloads"
 alias hc="cd ~/.config/hypr && nvim"
+alias ysu="yay -Syu"
 
 # Set personal aliases, overriding those provided by oh-my-zsh libs,
 # plugins, and themes. Aliases can be placed here, though oh-my-zsh
@@ -111,3 +112,11 @@ source /usr/share/doc/pkgfile/command-not-found.zsh
 [[ ! -f ~/.p10k.zsh ]] || source ~/.p10k.zsh
 
 export FZF_BASE=/usr/share/fzf
+
+# pnpm
+export PNPM_HOME='/home/z-cell/.local/share/pnpm'
+case ":$PATH:" in
+  *":$PNPM_HOME/bin:"*) ;;
+  *) export PATH="$PNPM_HOME/bin:$PATH" ;;
+esac
+# pnpm end
