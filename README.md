@@ -10,6 +10,11 @@ the structure of $HOME (e.g. `hypr/.config/hypr/...`).
     cd ~/dotfiles
     stow */
 
+### First-time app initialization
+
+- **Neovim**: Open `nvim`. Lazy.nvim will automatically bootstrap plugins. Run `:Mason` or install packages listed in `mason.txt` if needed.
+- **tmux**: Launch `tmux`. TPM will automatically clone itself and install plugins on first launch (or press `prefix + I` to fetch plugins manually).
+
 If a target file already exists and conflicts:
 
     stow --adopt <package>     # pulls existing file into repo instead of erroring

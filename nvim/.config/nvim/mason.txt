@@ -1,0 +1,19 @@
+  Installed
+    ◍ csharpier
+    ◍ debugpy
+    ◍ docker-compose-language-service
+    ◍ dockerfile-language-server
+    ◍ eslint_d
+    ◍ json-lsp
+    ◍ lua-language-server
+    ◍ omnisharp
+    ◍ pgformatter
+    ◍ postgres-language-server
+    ◍ pyright
+    ◍ ruff
+    ◍ shfmt
+    ◍ stylua
+    ◍ tailwindcss-language-server
+    ◍ tree-sitter-cli
+    ◍ vtsls
+    ◍ yaml-language-server
