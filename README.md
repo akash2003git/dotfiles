@@ -48,7 +48,20 @@ If a target file already exists and conflicts:
     git pull
     stow -R */
 
+## Local & Machine-Specific Configs (`~/.zshrc.local`)
+
+For machine-specific PATH exports, environment variables, secret tokens, or auto-installer outputs (e.g. `pnpm`, `nvm`, `cargo`, `conda`), place them in `~/.zshrc.local`:
+- `.zshrc` automatically sources `~/.zshrc.local` if it exists.
+- `~/.zshrc.local` is untracked, preventing external installer scripts from overwriting your Stow symlinks.
+
+If a third-party installer ever overwrites `~/.zshrc` with a standalone file:
+
+    cd ~/dotfiles
+    stow --adopt zsh     # pulls tool changes into dotfiles and restores the symlink
+    git diff             # review changes
+
 ## Notes
 - Never stow: .ssh, .gnupg, pulse cookies, browser profiles, anything with secrets.
-- .gitignore excludes caches/logs/history.
+- .gitignore excludes caches/logs/history and *.local files.
 - Current packages: hypr, waybar, wofi, kitty, nvim, wlogout, swaync, zsh, tmux
+

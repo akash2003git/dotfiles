@@ -1,2 +1,5 @@
 # tmux plugins managed dynamically by TPM
 tmux/.tmux/plugins/
+
+# Local machine-specific overrides
+*.local

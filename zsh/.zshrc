@@ -113,10 +113,6 @@ source /usr/share/doc/pkgfile/command-not-found.zsh
 
 export FZF_BASE=/usr/share/fzf
 
-# pnpm
-export PNPM_HOME='/home/z-cell/.local/share/pnpm'
-case ":$PATH:" in
-  *":$PNPM_HOME/bin:"*) ;;
-  *) export PATH="$PNPM_HOME/bin:$PATH" ;;
-esac
-# pnpm end
+# Source local / machine-specific configuration if present (untracked)
+[[ -f ~/.zshrc.local ]] && source ~/.zshrc.local
+
